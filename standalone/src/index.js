@@ -1,6 +1,8 @@
 import express from 'express';
 import {doCaptureWork, latestCapture, latestCapturePage, queue, showResults, allowedRequest} from "./helpers.js";
-import {getConcurrency, getMaxQueueLength} from "./config.js";
+import {getConcurrency, getMaxQueueLength, screenhotoneAccessKey } from "./config.js";
+const axios = require('axios');
+
 
 const port = process.env.PORT || 8080;
 const app = express();
@@ -25,6 +27,25 @@ async function capture(req, res) {
             res.status(result.statusCode).send(result.message);
         }
     });
+}
+async function screenshotOne (req, res) {
+    axios({ method: 'GET', url: `https://api.screenshotone.com/take?access_key=${screenhotoneAccessKey}&url={}&full_page=false&viewport_width=1920&viewport_height=1080&device_scale_factor=1&format=jpg&image_quality=80&block_ads=true&block_cookie_banners=true&block_banners_by_heuristics=false&block_trackers=true&delay=0&timeout=60` })
+    .then(function (response) {
+        // do something with the response...
+    }).catch(function (error) {
+        console.error(error);
+    });
+}
+
+async function screenshot(req, res) {
+    if (!allowedRequest(req.query)) {
+        res.status(403).send('Go away please');
+        return;
+    }
+    if (!req.query.engine || req.query.engine=='pp') return capture(req,res)
+    return screenshotOne (req, res)
+    
+    
 }
 
 app.get('/capture', capture);
